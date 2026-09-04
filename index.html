@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IntervueAI — Autonomous Business Interview Assistants</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#110c28',
+            purple: { DEFAULT: '#6a38ff', 500: '#7047ff', 600: '#5b2beb' },
+            pink: { DEFAULT: '#ff3b93', 400: '#ff5ea7', 500: '#ff3b93' },
+            lime: { DEFAULT: '#baf335', 400: '#c8f74e' },
+            cyan: { DEFAULT: '#0df2c9', 400: '#2ef5d2' },
+            orange: { DEFAULT: '#ff8a29', 500: '#ff7b1a' },
+            cream: '#fbf9f5',
+            glass: 'rgba(255, 255, 255, 0.75)'
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          boxShadow: {
+            'pop': '0 20px 50px -10px rgba(106, 56, 255, 0.25)',
+            'pop-pink': '0 20px 50px -10px rgba(255, 59, 147, 0.25)',
+            'neo': '5px 5px 0px #110c28',
+            'neo-sm': '3px 3px 0px #110c28',
+            'neo-purple': '5px 5px 0px #6a38ff'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+      --primary: #7047ff;
+      --pink: #ff3b93;
+      --lime: #baf335;
+      --cyan: #0df2c9;
+      --orange: #ff8a29;
+      --ink: #110c28;
+    }
+
+    body {
+      background-color: #faf7f2;
+      color: #110c28;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .gradient-hero-text {
+      background: linear-gradient(115deg, #6a38ff 0%, #ff3b93 55%, #ff8a29 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .mesh-gradient-bg {
+      background-image: 
+        radial-gradient(at 10% 15%, rgba(255, 59, 147, 0.15) 0px, transparent 50%),
+        radial-gradient(at 90% 10%, rgba(106, 56, 255, 0.18) 0px, transparent 55%),
+        radial-gradient(at 50% 60%, rgba(13, 242, 201, 0.12) 0px, transparent 60%),
+        radial-gradient(at 85% 85%, rgba(186, 243, 53, 0.18) 0px, transparent 50%);
+    }
+
+    .wave-bar {
+      animation: soundWave 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes soundWave {
+      0% { height: 12px; }
+      50% { height: 42px; }
+      100% { height: 20px; }
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.1s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.5s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+
+    .badge-glint {
+      position: relative;
+      overflow: hidden;
+    }
+    .badge-glint::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(60deg, transparent, rgba(255,255,255,0.4), transparent);
+      transform: rotate(25deg);
+      animation: glint 3.5s infinite;
+    }
+    @keyframes glint {
+      0% { transform: translateX(-100%) rotate(25deg); }
+      20% { transform: translateX(100%) rotate(25deg); }
+      100% { transform: translateX(100%) rotate(25deg); }
+    }
+
+    /* Modal transition */
+    .modal-backdrop {
+      background: rgba(17, 12, 40, 0.7);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="mesh-gradient-bg min-h-screen text-ink antialiased selection:bg-pink selection:text-white">
+
+  <!-- TOP ANNOUNCEMENT BAR -->
+  <div class="bg-gradient-to-r from-purple via-pink to-orange text-white text-xs md:text-sm font-bold py-2.5 px-4 shadow-sm text-center flex items-center justify-center gap-2">
+    <span class="bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider text-[11px] font-extrabold flex items-center gap-1.5">
+      <span class="w-2 h-2 rounded-full bg-lime animate-ping"></span> Live
+    </span>
+    <span>Autonomous AI Hiring Engine 3.2 is here: Conduct 500+ voice & technical interviews simultaneously!</span>
+    <a href="#assistants-section" class="underline ml-1 font-extrabold hover:text-lime transition-colors">Choose an Assistant &rarr;</a>
+  </div>
+
+  <!-- NAVIGATION -->
+  <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-purple-100/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Logo -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-purple to-pink flex items-center justify-center text-white text-xl font-black shadow-neo-sm transform group-hover:rotate-6 transition-all duration-300">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <div>
+          <span class="text-2xl font-black tracking-tight text-ink flex items-center">
+            Intervue<span class="text-pink">AI</span>
+            <span class="ml-1.5 text-[10px] uppercase font-black tracking-wider bg-lime text-ink px-1.5 py-0.5 rounded-md border border-ink shadow-[1px_1px_0px_#110c28]">PRO</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-8 font-bold text-sm text-ink/75">
+        <a href="#assistants-section" class="hover:text-purple transition-colors">AI Specialists</a>
+        <a href="#simulator-section" class="hover:text-purple transition-colors flex items-center gap-1.5">
+          <span>Interactive Sandbox</span>
+          <span class="bg-pink text-white text-[10px] px-1.5 py-0.5 rounded-full font-extrabold">Hot</span>
+        </a>
+        <a href="#features-section" class="hover:text-purple transition-colors">Enterprise Features</a>
+        <a href="#pricing-section" class="hover:text-purple transition-colors">Pricing & ROI</a>
+      </nav>
+
+      <!-- Right Actions: Currency Selector & Appoint Button -->
+      <div class="flex items-center gap-3">
+        <!-- Currency Pill with Auto-Detected Badge -->
+        <div class="flex items-center bg-white border-2 border-ink rounded-full px-2.5 py-1.5 shadow-neo-sm gap-2 text-xs font-bold">
+          <i class="fa-solid fa-globe text-purple"></i>
+          <span id="detected-country-flag" class="text-base leading-none">🇺🇸</span>
+          <select id="currency-select" class="bg-transparent font-black text-ink outline-none cursor-pointer pr-1">
+            <option value="USD">USD ($1,000)</option>
+            <option value="EUR">EUR (€950)</option>
+            <option value="GBP">GBP (£850)</option>
+            <option value="INR">INR (₹79,000)</option>
+            <option value="CAD">CAD (C$1,350)</option>
+            <option value="AUD">AUD (A$1,480)</option>
+            <option value="JPY">JPY (¥150,000)</option>
+            <option value="SGD">SGD (S$1,320)</option>
+            <option value="AED">AED (AED 3,670)</option>
+          </select>
+        </div>
+
+        <button onclick="openBookingModal()" class="hidden sm:inline-flex items-center gap-2 bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-500 text-white font-extrabold px-5 py-2.5 rounded-xl shadow-neo border-2 border-ink transition-all transform hover:-translate-y-0.5 active:translate-y-0">
+          <i class="fa-solid fa-bolt"></i>
+          <span>Appoint Assistant</span>
+        </button>
+
+        <!-- Mobile menu toggle -->
+        <button onclick="toggleMobileMenu()" class="md:hidden text-2xl text-ink p-1">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-ink/10 px-6 py-4 space-y-3 font-bold text-sm">
+      <a href="#assistants-section" onclick="toggleMobileMenu()" class="block py-2 text-ink hover:text-purple">AI Specialists</a>
+      <a href="#simulator-section" onclick="toggleMobileMenu()" class="block py-2 text-pink flex items-center justify-between">
+        <span>Interactive Sandbox</span>
+        <span class="bg-pink text-white text-[10px] px-2 py-0.5 rounded-full">Try Live</span>
+      </a>
+      <a href="#features-section" onclick="toggleMobileMenu()" class="block py-2 text-ink">Enterprise Features</a>
+      <a href="#pricing-section" onclick="toggleMobileMenu()" class="block py-2 text-ink">Pricing & ROI</a>
+      <button onclick="toggleMobileMenu(); openBookingModal();" class="w-full bg-purple text-white py-3 rounded-xl font-extrabold shadow-neo-sm border-2 border-ink">
+        Appoint AI Assistant
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="relative pt-12 pb-24 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid lg:grid-cols-12 gap-12 items-center">
+        
+        <!-- Left Content -->
+        <div class="lg:col-span-7 text-center lg:text-left space-y-6">
+          
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border-2 border-ink shadow-neo-sm">
+            <span class="w-2.5 h-2.5 rounded-full bg-pink animate-pulse"></span>
+            <span class="text-xs uppercase tracking-wider font-black text-ink">Autonomous AI Hiring Agents</span>
+            <span class="text-xs font-bold text-purple bg-purple/10 px-2 py-0.5 rounded-full ml-1">v3.2 Real-Time Voice</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-6xl xl:text-7xl font-black tracking-tight leading-[1.03] text-ink">
+            Hire the top 1%. <br>
+            Without spending <br>
+            <span class="gradient-hero-text">100 recruiter hours.</span>
+          </h1>
+
+          <p class="text-lg sm:text-xl text-ink/70 font-semibold max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+            Deploy specialized, autonomous AI interviewers capable of grilling full-stack engineers, vetting VP-level execs, or stress-testing sales reps. Appoint your dedicated interviewer for 
+            <span class="underline decoration-pink decoration-4 font-black text-ink" id="hero-currency-tag">~1,000 units</span> of your local currency.
+          </p>
+
+          <!-- CTAs -->
+          <div class="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <button onclick="openBookingModal()" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-ink hover:bg-purple text-white text-base font-extrabold px-8 py-4 rounded-2xl shadow-neo border-2 border-ink transition-all transform hover:-translate-y-1">
+              <i class="fa-solid fa-user-plus text-lime text-lg"></i>
+              <span id="hero-cta-btn">Appoint Assistant Now</span>
+            </button>
+
+            <a href="#simulator-section" class="w-full sm:w-auto inline-flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-ink text-base font-extrabold px-7 py-4 rounded-2xl shadow-neo border-2 border-ink transition-all transform hover:-translate-y-1">
+              <i class="fa-solid fa-play text-pink"></i>
+              <span>Try Live Simulation</span>
+            </a>
+          </div>
+
+          <!-- Social Proof Avatars -->
+          <div class="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-4">
+            <div class="flex -space-x-3">
+              <img class="w-10 h-10 rounded-full border-2 border-white shadow" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Recruiter">
+              <img class="w-10 h-10 rounded-full border-2 border-white shadow" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="CTO">
+              <img class="w-10 h-10 rounded-full border-2 border-white shadow" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80" alt="VP HR">
+              <div class="w-10 h-10 rounded-full bg-lime text-ink font-black text-xs flex items-center justify-center border-2 border-white shadow">
+                +4.8k
+              </div>
+            </div>
+            <div class="text-left text-xs font-bold text-ink/80">
+              <div class="flex text-orange text-xs mb-0.5">
+                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+              </div>
+              <span>Trusted by 1,200+ tech startups, scale-ups & enterprises</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right Hero Visual / Interactive Assistant Preview Card -->
+        <div class="lg:col-span-5 relative">
+          <!-- Background Colorful Blob -->
+          <div class="absolute -top-10 -right-10 w-72 h-72 bg-gradient-to-br from-pink/30 to-purple/40 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-10 -left-10 w-72 h-72 bg-gradient-to-tr from-cyan/30 to-lime/40 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Main Interactive Card -->
+          <div class="relative bg-white border-3 border-ink rounded-3xl p-6 shadow-neo transform md:rotate-1 hover:rotate-0 transition-transform duration-300">
+            
+            <div class="flex items-center justify-between border-b-2 border-slate-100 pb-4">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple to-pink flex items-center justify-center text-white text-2xl shadow-inner border border-white">
+                    <i class="fa-solid fa-robot"></i>
+                  </div>
+                  <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-lime rounded-full border-2 border-white"></span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-extrabold text-ink text-base">Nova-9 (Apex AI)</h3>
+                    <span class="bg-purple/10 text-purple text-[10px] font-black px-2 py-0.5 rounded-full">SYSTEM ARCHITECT</span>
+                  </div>
+                  <p class="text-xs text-ink/60 font-semibold">Active Session • Candidate #402</p>
+                </div>
+              </div>
+
+              <span class="text-xs font-black uppercase tracking-wider bg-lime/30 text-emerald-800 border border-lime px-2.5 py-1 rounded-lg">
+                Live Analysis
+              </span>
+            </div>
+
+            <!-- Dynamic Waveform & AI Speech Bubble -->
+            <div class="my-5 p-4 bg-slate-50 rounded-2xl border-2 border-dashed border-purple-200">
+              <p class="text-xs font-bold text-purple uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-quote-left text-pink"></i> Current Live Probe
+              </p>
+              <p class="text-sm font-semibold text-ink leading-snug">
+                "Explain how you would handle race conditions in distributed payment webhooks without impacting latency..."
+              </p>
+
+              <!-- Audio Wave Visualizer -->
+              <div class="flex items-center justify-between gap-1 mt-4 px-2 h-12 bg-white rounded-xl border border-ink/10 shadow-sm">
+                <div class="flex items-center gap-1.5">
+                  <button class="w-7 h-7 rounded-lg bg-pink text-white flex items-center justify-center text-xs">
+                    <i class="fa-solid fa-volume-high"></i>
+                  </button>
+                  <span class="text-[11px] font-bold text-ink/70">Audio Stream: 24kHz Ultra-Low Latency</span>
+                </div>
+                <div class="flex items-center gap-1 h-8">
+                  <div class="w-1 bg-purple rounded-full wave-bar"></div>
+                  <div class="w-1 bg-pink rounded-full wave-bar"></div>
+                  <div class="w-1 bg-cyan rounded-full wave-bar"></div>
+                  <div class="w-1 bg-lime rounded-full wave-bar"></div>
+                  <div class="w-1 bg-orange rounded-full wave-bar"></div>
+                  <div class="w-1 bg-purple rounded-full wave-bar"></div>
+                  <div class="w-1 bg-pink rounded-full wave-bar"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real-Time Metrics Evaluator -->
+            <div class="grid grid-cols-3 gap-2 text-center text-xs">
+              <div class="p-2.5 rounded-xl bg-purple/5 border border-purple/20">
+                <span class="text-ink/60 font-bold block text-[10px]">Architectural Depth</span>
+                <span class="font-black text-purple text-base">94%</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-cyan/10 border border-cyan/30">
+                <span class="text-ink/60 font-bold block text-[10px]">Logic Coherence</span>
+                <span class="font-black text-emerald-600 text-base">98%</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-pink/10 border border-pink/20">
+                <span class="text-ink/60 font-bold block text-[10px]">Red-Flags</span>
+                <span class="font-black text-pink text-base">0 detected</span>
+              </div>
+            </div>
+
+            <!-- Card Bottom Bar -->
+            <div class="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span class="font-extrabold text-ink/80 flex items-center gap-1.5">
+                <i class="fa-solid fa-shield-halved text-purple"></i> Anti-Cheat & Code Execution Sandbox Active
+              </span>
+              <button onclick="openBookingModal('Nova Vance (Principal Eng)')" class="bg-lime hover:bg-lime-400 text-ink font-black px-3 py-1.5 rounded-lg border border-ink text-xs shadow-neo-sm transition-transform active:translate-y-0.5">
+                Hire Nova
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Floating Badges -->
+          <div class="absolute -top-4 -left-6 bg-white border-2 border-ink rounded-2xl px-4 py-2.5 shadow-neo rotate-[-6deg] hidden sm:flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-cyan animate-pulse"></span>
+            <span class="text-xs font-black">99.4% Human Interview Equivalence</span>
+          </div>
+
+          <div class="absolute -bottom-6 -right-6 bg-pink text-white border-2 border-ink rounded-2xl px-4 py-2.5 shadow-neo rotate-[4deg] hidden sm:flex items-center gap-2">
+            <i class="fa-solid fa-bolt text-lime"></i>
+            <span class="text-xs font-black">Instant Bias-Free EEOC Report</span>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGO STRIP / CLIENT MARQUEE -->
+  <section class="border-y-2 border-ink bg-white py-6 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
+      <span class="font-black uppercase text-xs tracking-widest text-ink/60 whitespace-nowrap">
+        POWERING INTERVIEWS FOR TEAMS AT:
+      </span>
+      <div class="flex items-center justify-around w-full max-w-4xl opacity-80 gap-6 flex-wrap text-base sm:text-xl font-black tracking-tight text-ink">
+        <span class="hover:text-purple transition-colors cursor-pointer"><i class="fa-brands fa-stripe mr-1"></i> STRIPE-X</span>
+        <span class="hover:text-pink transition-colors cursor-pointer"><i class="fa-brands fa-shopify mr-1"></i> CARTIFY</span>
+        <span class="hover:text-cyan transition-colors cursor-pointer"><i class="fa-brands fa-figma mr-1"></i> PIXELFLOW</span>
+        <span class="hover:text-orange transition-colors cursor-pointer"><i class="fa-brands fa-aws mr-1"></i> CLOUDMETRIC</span>
+        <span class="hover:text-purple transition-colors cursor-pointer"><i class="fa-brands fa-spotify mr-1"></i> AUDIOVOX</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSISTANTS ROSTER (THE CORE PRODUCT) -->
+  <section id="assistants-section" class="py-24 relative">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple/10 border border-purple/30 text-purple font-extrabold text-xs uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-users-viewfinder"></i> Verified Autonomous Roster
+          </div>
+          <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-ink">
+            Appoint a Specialized AI Interviewer
+          </h2>
+          <p class="text-ink/70 font-semibold text-base mt-2 max-w-xl">
+            Each assistant possesses verified domain knowledge, customized rubric scoring, and an adaptive interview persona. Ready to deploy across your pipeline in seconds.
+          </p>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="flex items-center flex-wrap gap-2">
+          <button onclick="filterAgents('all')" class="agent-filter-btn active bg-ink text-white px-4 py-2 rounded-xl text-xs font-black border-2 border-ink shadow-neo-sm">All Roles</button>
+          <button onclick="filterAgents('tech')" class="agent-filter-btn bg-white text-ink hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-black border-2 border-ink shadow-neo-sm">Engineering</button>
+          <button onclick="filterAgents('product')" class="agent-filter-btn bg-white text-ink hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-black border-2 border-ink shadow-neo-sm">Product & Exec</button>
+          <button onclick="filterAgents('sales')" class="agent-filter-btn bg-white text-ink hover:bg-slate-100 px-4 py-2 rounded-xl text-xs font-black border-2 border-ink shadow-neo-sm">Sales & Ops</button>
+        </div>
+      </div>
+
+      <!-- Assistants Grid -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8" id="assistants-grid">
+
+        <!-- ASSISTANT 1 -->
+        <div class="agent-card tech bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-code"></i>
+              </div>
+              <span class="bg-lime text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 9.6/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Nova Vance</h3>
+              <p class="text-xs font-extrabold text-purple uppercase tracking-wider">Senior / Staff Full-Stack & Systems</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Drills deep into system scalability, distributed state caching, concurrency bottlenecks, and live algorithmic refactoring.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-language text-purple mr-1"></i> Languages:</span>
+                <span>Python, Go, TS, Rust, Java</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-pink mr-1"></i> Avg Interview Duration:</span>
+                <span>45 - 60 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-circle-check text-cyan mr-1"></i> Live Code Execution:</span>
+                <span class="text-emerald-600 font-black">Enabled (Dockerized)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Nova Vance (Staff Full-Stack)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Nova
+            </button>
+          </div>
+        </div>
+
+        <!-- ASSISTANT 2 -->
+        <div class="agent-card product bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-chart-pie"></i>
+              </div>
+              <span class="bg-cyan/30 text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 8.9/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Aria Montgomery</h3>
+              <p class="text-xs font-extrabold text-pink uppercase tracking-wider">VP Product & Growth Leadership</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Assesses product sense, user unit economics, cross-functional conflict resolution, and metrics prioritization under pressure.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-bullseye text-pink mr-1"></i> Focus:</span>
+                <span>Product Strategy, OKRs, UX</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-purple mr-1"></i> Avg Interview Duration:</span>
+                <span>40 - 50 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-circle-check text-cyan mr-1"></i> Case Study Whiteboard:</span>
+                <span class="text-emerald-600 font-black">Interactive Canvas</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Aria Montgomery (VP Product)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Aria
+            </button>
+          </div>
+        </div>
+
+        <!-- ASSISTANT 3 -->
+        <div class="agent-card sales bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-handshake-angle"></i>
+              </div>
+              <span class="bg-lime text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 9.2/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Marcus Sterling</h3>
+              <p class="text-xs font-extrabold text-orange uppercase tracking-wider">Enterprise B2B AE & Sales Leader</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Conducts high-friction live cold-pitch roleplays, MEDDPICC qualification challenges, and objections handling simulations.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-theater-masks text-orange mr-1"></i> Mode:</span>
+                <span>Aggressive Buyer Roleplay</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-purple mr-1"></i> Avg Interview Duration:</span>
+                <span>35 - 45 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-chart-line text-cyan mr-1"></i> Pipeline Rigor:</span>
+                <span class="text-emerald-600 font-black">MEDDPICC / Challenger</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Marcus Sterling (Enterprise AE)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Marcus
+            </button>
+          </div>
+        </div>
+
+        <!-- ASSISTANT 4 -->
+        <div class="agent-card tech bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-server"></i>
+              </div>
+              <span class="bg-purple/20 text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 9.8/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Elena Rostova</h3>
+              <p class="text-xs font-extrabold text-cyan-600 uppercase tracking-wider">DevOps, SRE & Cloud Security</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Subjects candidates to simulated zero-day breaches, Kubernetes cluster failures, and multi-region disaster recovery runbooks.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-cloud text-purple mr-1"></i> Stacks:</span>
+                <span>AWS, K8s, Terraform, eBPF</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-pink mr-1"></i> Avg Interview Duration:</span>
+                <span>50 - 65 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-terminal text-cyan mr-1"></i> Live Terminal Emulation:</span>
+                <span class="text-emerald-600 font-black">Active Bash CLI</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Elena Rostova (DevOps & SRE)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Elena
+            </button>
+          </div>
+        </div>
+
+        <!-- ASSISTANT 5 -->
+        <div class="agent-card sales bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-lime-400 to-emerald-500 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-headset"></i>
+              </div>
+              <span class="bg-lime text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 8.5/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Kai Tanaka</h3>
+              <p class="text-xs font-extrabold text-emerald-600 uppercase tracking-wider">VP Customer Success & RevOps</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Measures empathy under angry client escalation scenarios, net retention economics, and SaaS onboarding framework designs.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-heart-pulse text-pink mr-1"></i> Metrics:</span>
+                <span>NDR, Churn Reduction, CSAT</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-purple mr-1"></i> Avg Interview Duration:</span>
+                <span>35 - 45 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-comments text-cyan mr-1"></i> Sentiment Scoring:</span>
+                <span class="text-emerald-600 font-black">Multi-Modal Vocal Tone</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Kai Tanaka (Customer Success & RevOps)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Kai
+            </button>
+          </div>
+        </div>
+
+        <!-- ASSISTANT 6 -->
+        <div class="agent-card product bg-white rounded-3xl border-3 border-ink shadow-neo overflow-hidden flex flex-col justify-between group hover:-translate-y-1 transition-all">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white text-2xl shadow-md border-2 border-ink">
+                <i class="fa-solid fa-fingerprint"></i>
+              </div>
+              <span class="bg-orange/20 text-ink font-black text-xs px-2.5 py-1 rounded-full border border-ink shadow-neo-sm">
+                Strictness: 9.0/10
+              </span>
+            </div>
+
+            <div class="mt-4">
+              <h3 class="text-xl font-black text-ink">Zara Quinn</h3>
+              <p class="text-xs font-extrabold text-purple uppercase tracking-wider">Culture, Behavioral & Executive Ethics</p>
+            </div>
+
+            <p class="text-xs text-ink/70 font-semibold mt-3 leading-relaxed">
+              Unearths toxic workplace traits, ethical boundaries, cognitive adaptability, and grit through STAR-method psychological forensics.
+            </p>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2">
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-scale-balanced text-purple mr-1"></i> Compliance:</span>
+                <span>Strict EEOC & Anti-Bias</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-stopwatch text-pink mr-1"></i> Avg Interview Duration:</span>
+                <span>30 - 45 mins</span>
+              </div>
+              <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+                <span><i class="fa-solid fa-brain text-cyan mr-1"></i> STAR Depth:</span>
+                <span class="text-emerald-600 font-black">Deep Follow-Up Branching</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 bg-slate-50 border-t-2 border-ink flex items-center justify-between">
+            <div>
+              <span class="text-[10px] uppercase font-black text-ink/60 block">Campaign Cost</span>
+              <span class="text-xl font-black text-ink assistant-price-tag">~1,000 USD</span>
+            </div>
+            <button onclick="openBookingModal('Zara Quinn (Culture & Behavioral)')" class="bg-gradient-to-r from-purple to-pink hover:from-purple-600 hover:to-pink-600 text-white font-extrabold text-xs px-5 py-2.5 rounded-xl border-2 border-ink shadow-neo-sm">
+              Appoint Zara
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- INTERACTIVE AI INTERVIEW SANDBOX (TEST DRIVE BEFORE HIRING) -->
+  <section id="simulator-section" class="py-20 bg-ink text-white relative overflow-hidden">
+    <!-- Neon back glow -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple/30 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-pink/30 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <span class="bg-lime text-ink font-black text-xs uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3 border border-lime shadow-neo-sm">
+          Interactive Live Demo
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-white">
+          Experience an AI Interview Right Now
+        </h2>
+        <p class="text-white/70 font-semibold text-base mt-3">
+          Step into candidate shoes. Choose a role and speak or type your answer. See how our AI evaluator analyzes depth, signals, and buzzwords in real-time.
+        </p>
+      </div>
+
+      <!-- Simulator Console Container -->
+      <div class="max-w-4xl mx-auto bg-slate-900 border-3 border-purple-500/50 rounded-3xl shadow-2xl p-6 sm:p-8">
+        
+        <!-- Console Header -->
+        <div class="flex flex-col sm:flex-row items-center justify-between pb-6 border-b border-white/10 gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-purple flex items-center justify-center text-white text-xl border-2 border-white/20">
+              <i class="fa-solid fa-microphone-lines"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-white text-base" id="sim-agent-name">Nova Vance</span>
+                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-500/30">ONLINE & LISTENING</span>
+              </div>
+              <p class="text-xs text-white/50">Subject: Distributed Systems & Cache Consistency</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-xl border border-white/10">
+            <label class="text-xs font-bold text-white/70 px-2">Role:</label>
+            <select id="sim-role-select" onchange="switchSimScenario()" class="bg-slate-900 text-lime font-black text-xs p-1.5 rounded-lg border border-white/10 cursor-pointer">
+              <option value="system">Senior Backend / Distributed Architecture</option>
+              <option value="product">VP Product Management / Strategy</option>
+              <option value="sales">Enterprise AE / Client Escalation</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dialogue History -->
+        <div id="dialogue-box" class="py-6 space-y-4 min-h-[220px] max-h-[340px] overflow-y-auto pr-2">
+          
+          <!-- AI message -->
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-purple flex-shrink-0 flex items-center justify-center text-xs text-white font-bold">
+              AI
+            </div>
+            <div class="bg-white/10 border border-white/10 p-4 rounded-2xl rounded-tl-none max-w-xl text-sm leading-relaxed">
+              <p id="sim-ai-question" class="text-white font-medium">
+                "We are designing an e-commerce flash sale service with 80,000 requests/second hitting our database. How do you prevent inventory overselling without cratering read throughput?"
+              </p>
+              <span class="text-[10px] text-lime font-bold mt-2 block">
+                <i class="fa-solid fa-bolt mr-1"></i> Waiting for your response strategy...
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Preset Quick Responses or Custom Typing -->
+        <div class="border-t border-white/10 pt-4 space-y-3">
+          <p class="text-xs text-white/50 font-bold uppercase tracking-wider">Quick Select Candidate Answers (or type below):</p>
+          <div class="flex flex-wrap gap-2" id="sim-preset-chips">
+            <button onclick="applyPresetResponse(0)" class="bg-white/5 hover:bg-white/15 text-white/90 text-xs px-3 py-2 rounded-xl border border-white/10 transition-colors text-left">
+              💡 "Use Redis Lua scripts for atomic decrement with message queues for async order persistence."
+            </button>
+            <button onclick="applyPresetResponse(1)" class="bg-white/5 hover:bg-white/15 text-white/90 text-xs px-3 py-2 rounded-xl border border-white/10 transition-colors text-left">
+              ⚠️ "Just scale up PostgreSQL with read replicas and add sticky session load balancing."
+            </button>
+          </div>
+
+          <div class="flex gap-2 mt-2">
+            <input type="text" id="sim-user-input" placeholder="Type your architectural answer here..." class="flex-1 bg-slate-950 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-pink font-medium">
+            <button onclick="submitUserSimResponse()" class="bg-gradient-to-r from-pink to-purple hover:from-pink-500 hover:to-purple-600 text-white font-black px-6 py-3 rounded-xl border border-white/20 shadow-neo-sm flex items-center gap-2">
+              <span>Send</span>
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-time Scorecard evaluation report snippet -->
+        <div id="sim-evaluation-card" class="mt-6 p-4 rounded-2xl bg-white/5 border border-white/10 hidden">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black uppercase text-lime flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-notch fa-spin"></i> Live AI Evaluation Feedback
+            </span>
+            <span class="text-xs font-black bg-pink px-2 py-0.5 rounded-full" id="sim-score-pill">Score: 92/100</span>
+          </div>
+          <p class="text-xs text-white/80" id="sim-score-commentary">
+            Strong signal: Accurately identified single-threaded in-memory atomic guarantees (Redis Lua script) to bypass database locks. Zero buzzword fluff detected.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOW APPOINTMENT WORKS & PRICING IN LOCAL CURRENCY -->
+  <section id="pricing-section" class="py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="bg-pink/10 text-pink border border-pink/30 font-black text-xs uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3">
+          Transparent, Localized Pricing
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-black tracking-tight text-ink">
+          One Flat Fee. Around 1,000 Units of Your Currency.
+        </h2>
+        <p class="text-ink/70 font-semibold text-base mt-3">
+          No tricky candidate credits or per-minute penalties. Appoint a dedicated AI specialist for your entire hiring campaign (up to 50 comprehensive full-length interviews included).
+        </p>
+      </div>
+
+      <!-- Pricing Cards Grid -->
+      <div class="grid lg:grid-cols-3 gap-8 items-stretch">
+        
+        <!-- Plan 1: Single Campaign -->
+        <div class="bg-white border-3 border-ink rounded-3xl p-8 shadow-neo flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="bg-purple/10 text-purple font-black text-xs px-3 py-1 rounded-full uppercase">Standard Campaign</span>
+              <i class="fa-solid fa-seedling text-2xl text-purple"></i>
+            </div>
+
+            <div class="mt-6">
+              <span class="text-4xl sm:text-5xl font-black text-ink" id="plan-standard-price">$1,000</span>
+              <span class="text-ink/60 font-bold text-sm block mt-1" id="plan-standard-currency">One-time flat investment</span>
+            </div>
+
+            <p class="text-xs font-semibold text-ink/70 mt-4 leading-relaxed">
+              Ideal for hiring a single high-stakes role (Engineering, Product, Sales, or Ops).
+            </p>
+
+            <ul class="mt-6 space-y-3 text-xs font-bold text-ink/80">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-pink"></i> 1 Specialized AI Assistant of your choice</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-pink"></i> Up to 50 Full-Length Candidate Interviews</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-pink"></i> Dockerized Code Sandbox / Case Studies</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-pink"></i> Audio + Full Transcript + Deep Scorecards</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-pink"></i> EEOC Compliance & Anti-Cheating Suite</li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-4 border-t border-slate-100">
+            <button onclick="openBookingModal('Standard Campaign')" class="w-full bg-ink hover:bg-purple text-white font-extrabold py-3.5 rounded-xl border-2 border-ink shadow-neo-sm transition-all">
+              Appoint 1 Assistant
+            </button>
+          </div>
+        </div>
+
+        <!-- Plan 2: Scale Trio (FEATURED) -->
+        <div class="bg-gradient-to-b from-purple to-pink text-white border-3 border-ink rounded-3xl p-8 shadow-pop flex flex-col justify-between relative transform lg:-translate-y-4">
+          <div class="absolute -top-4 right-8 bg-lime text-ink font-black text-xs px-4 py-1.5 rounded-full border-2 border-ink shadow-neo-sm uppercase tracking-wider">
+            Most Popular for Scale-ups
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="bg-white/20 text-white font-black text-xs px-3 py-1 rounded-full uppercase">Multi-Role Suite</span>
+              <i class="fa-solid fa-rocket text-2xl text-lime"></i>
+            </div>
+
+            <div class="mt-6">
+              <span class="text-4xl sm:text-5xl font-black text-white" id="plan-pro-price">$2,400</span>
+              <span class="text-white/80 font-bold text-sm block mt-1" id="plan-pro-currency">Save ~20% on 3 Assistants</span>
+            </div>
+
+            <p class="text-xs font-semibold text-white/90 mt-4 leading-relaxed">
+              Equip your tech, product, and go-to-market hiring pods with synchronized AI interviewers.
+            </p>
+
+            <ul class="mt-6 space-y-3 text-xs font-bold text-white">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-lime"></i> 3 Specialized AI Assistants concurrently</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-lime"></i> Up to 200 Candidate Interviews</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-lime"></i> Custom Company Culture & Rubric Ingestion</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-lime"></i> ATS Integrations (Greenhouse, Lever, Ashby)</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-lime"></i> Dedicated Slack hiring channel with AI bot</li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-4 border-t border-white/20">
+            <button onclick="openBookingModal('Multi-Role Suite (3 Assistants)')" class="w-full bg-lime hover:bg-lime-400 text-ink font-black py-4 rounded-xl border-2 border-ink shadow-neo text-sm transition-all transform hover:scale-[1.02]">
+              Appoint Multi-Role Trio
+            </button>
+          </div>
+        </div>
+
+        <!-- Plan 3: Enterprise Unlimited -->
+        <div class="bg-white border-3 border-ink rounded-3xl p-8 shadow-neo flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="bg-cyan/20 text-cyan-800 font-black text-xs px-3 py-1 rounded-full uppercase">Enterprise Custom</span>
+              <i class="fa-solid fa-building-columns text-2xl text-ink"></i>
+            </div>
+
+            <div class="mt-6">
+              <span class="text-4xl sm:text-5xl font-black text-ink" id="plan-ent-price">$5,000+</span>
+              <span class="text-ink/60 font-bold text-sm block mt-1">Unlimited Monthly Scale</span>
+            </div>
+
+            <p class="text-xs font-semibold text-ink/70 mt-4 leading-relaxed">
+              For high-volume hiring enterprises processing 500+ applicants weekly.
+            </p>
+
+            <ul class="mt-6 space-y-3 text-xs font-bold text-ink/80">
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple"></i> Unlimited AI Interview Assistants</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple"></i> Custom Voice Cloning for your Execs</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple"></i> SOC2 Type II, ISO 27001, GDPR Compliant</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple"></i> Candidate Fraud Defense & Eye-Tracking</li>
+              <li class="flex items-center gap-2"><i class="fa-solid fa-check text-purple"></i> Custom SLA & 24/7 Dedicated Support</li>
+            </ul>
+          </div>
+
+          <div class="mt-8 pt-4 border-t border-slate-100">
+            <button onclick="openBookingModal('Enterprise Unlimited Suite')" class="w-full bg-white hover:bg-slate-50 text-ink font-black py-3.5 rounded-xl border-2 border-ink shadow-neo-sm transition-all">
+              Talk with Enterprise Team
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROI Calculator Bar -->
+      <div class="mt-16 bg-white border-3 border-ink rounded-3xl p-8 shadow-neo">
+        <div class="grid md:grid-cols-12 gap-6 items-center">
+          <div class="md:col-span-5">
+            <h4 class="text-xl font-black text-ink">Calculate Hiring Savings</h4>
+            <p class="text-xs text-ink/70 font-semibold mt-1">
+              Adjust your monthly interview candidate volume:
+            </p>
+            <div class="mt-4 flex items-center gap-4">
+              <input type="range" id="roi-slider" min="10" max="250" value="40" step="5" oninput="calculateROI()" class="w-full accent-pink cursor-pointer">
+              <span id="roi-candidate-count" class="font-black text-purple text-lg w-16">40</span>
+            </div>
+          </div>
+
+          <div class="md:col-span-7 grid grid-cols-3 gap-4 border-t md:border-t-0 md:border-l border-ink/10 pt-4 md:pt-0 md:pl-6 text-center">
+            <div class="p-3 bg-purple/5 rounded-2xl border border-purple/10">
+              <span class="text-[10px] uppercase font-black text-ink/50 block">Recruiter Hours Saved</span>
+              <span class="text-xl sm:text-2xl font-black text-purple" id="roi-hours-saved">60 hrs</span>
+            </div>
+            <div class="p-3 bg-pink/5 rounded-2xl border border-pink/10">
+              <span class="text-[10px] uppercase font-black text-ink/50 block">Time to Offer</span>
+              <span class="text-xl sm:text-2xl font-black text-pink">4 Days</span>
+            </div>
+            <div class="p-3 bg-lime/20 rounded-2xl border border-lime/40">
+              <span class="text-[10px] uppercase font-black text-ink/50 block">Estimated Savings</span>
+              <span class="text-xl sm:text-2xl font-black text-emerald-800" id="roi-money-saved">$5,200</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="features-section" class="py-20 bg-white border-t-2 border-ink">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-3xl mx-auto mb-16">
+        <span class="bg-cyan/20 text-cyan-800 font-black text-xs uppercase tracking-widest px-3 py-1 rounded-full inline-block mb-3">
+          Engineering Grade
+        </span>
+        <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-ink">
+          Why Top Engineering & HR Leaders Prefer IntervueAI
+        </h2>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        
+        <div class="p-8 rounded-3xl bg-slate-50 border-2 border-ink shadow-neo-sm">
+          <div class="w-12 h-12 rounded-xl bg-purple text-white flex items-center justify-center text-xl mb-6 shadow-sm">
+            <i class="fa-solid fa-code-branch"></i>
+          </div>
+          <h3 class="text-lg font-black text-ink">Dynamic Follow-Up Branching</h3>
+          <p class="text-xs font-semibold text-ink/70 mt-2 leading-relaxed">
+            Unlike scripted video questionnaires, our AI dynamically adapts. If a candidate claims expertise in Raft consensus, it pivots straight to partition tolerance edge-cases.
+          </p>
+        </div>
+
+        <div class="p-8 rounded-3xl bg-slate-50 border-2 border-ink shadow-neo-sm">
+          <div class="w-12 h-12 rounded-xl bg-pink text-white flex items-center justify-center text-xl mb-6 shadow-sm">
+            <i class="fa-solid fa-shield-virus"></i>
+          </div>
+          <h3 class="text-lg font-black text-ink">Anti-Cheating & LLM Shield</h3>
+          <p class="text-xs font-semibold text-ink/70 mt-2 leading-relaxed">
+            Real-time keystroke rhythm detection, eye-drift monitoring, and dynamic token randomization prevent candidates from using hidden ChatGPT screens.
+          </p>
+        </div>
+
+        <div class="p-8 rounded-3xl bg-slate-50 border-2 border-ink shadow-neo-sm">
+          <div class="w-12 h-12 rounded-xl bg-lime text-ink flex items-center justify-center text-xl mb-6 shadow-sm border border-ink">
+            <i class="fa-solid fa-file-invoice"></i>
+          </div>
+          <h3 class="text-lg font-black text-ink">Actionable Executive Scorecard</h3>
+          <p class="text-xs font-semibold text-ink/70 mt-2 leading-relaxed">
+            Get an instant 4-page diagnostic report with time-stamped audio quotes, code diffs, behavioral signals, and calibrated compensation benchmarks.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS SECTION -->
+  <section class="py-24 bg-cream">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-3xl sm:text-4xl font-black text-ink">What Hiring Teams Say</h2>
+        <p class="text-xs sm:text-sm font-semibold text-ink/60 mt-2">Real metrics from real engineering & people ops leaders</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        
+        <div class="bg-white p-6 rounded-3xl border-2 border-ink shadow-neo">
+          <div class="flex text-orange text-xs mb-3">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-xs font-semibold text-ink leading-relaxed">
+            "We appointed Nova Vance to screen 280 applicants for our Staff DevOps opening. Nova did in 3 days what would have taken our engineering leads 6 weeks. The scorecards were astonishingly accurate."
+          </p>
+          <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
+            <img class="w-10 h-10 rounded-full border border-ink" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="Sarah J.">
+            <div>
+              <p class="text-xs font-black text-ink">Sarah Jenkins</p>
+              <p class="text-[10px] text-ink/60 font-bold">VP of Eng, FlowScale</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border-2 border-ink shadow-neo">
+          <div class="flex text-orange text-xs mb-3">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-xs font-semibold text-ink leading-relaxed">
+            "Paying ~1,000 units of our local currency for an entire 50-person candidate pool felt like a typo given how good it is. Candidates actually praised the interview for being objective and respectful."
+          </p>
+          <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
+            <img class="w-10 h-10 rounded-full border border-ink" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80" alt="David K.">
+            <div>
+              <p class="text-xs font-black text-ink">David Koenig</p>
+              <p class="text-[10px] text-ink/60 font-bold">Head of Talent, Vertex AI</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl border-2 border-ink shadow-neo">
+          <div class="flex text-orange text-xs mb-3">
+            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+          </div>
+          <p class="text-xs font-semibold text-ink leading-relaxed">
+            "Marcus Sterling vetted our enterprise AE applicants. His live objection handling test exposed 3 candidates who had glowing resumes but folded under real pricing pushback."
+          </p>
+          <div class="mt-4 pt-4 border-t border-slate-100 flex items-center gap-3">
+            <img class="w-10 h-10 rounded-full border border-ink" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80" alt="Maya P.">
+            <div>
+              <p class="text-xs font-black text-ink">Maya Patel</p>
+              <p class="text-[10px] text-ink/60 font-bold">Chief Revenue Officer, HyperLink</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-ink text-white border-t-3 border-ink pt-16 pb-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-white/10">
+        
+        <div class="col-span-2">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple to-pink flex items-center justify-center text-white text-lg font-black">
+              <i class="fa-solid fa-brain"></i>
+            </div>
+            <span class="text-2xl font-black tracking-tight text-white">
+              Intervue<span class="text-pink">AI</span>
+            </span>
+          </div>
+          <p class="text-xs text-white/60 font-medium mt-4 max-w-sm leading-relaxed">
+            Empowering modern businesses to conduct objective, deep, and bias-free interviews with autonomous AI specialists.
+          </p>
+          <div class="mt-6 flex items-center gap-3">
+            <span class="w-2.5 h-2.5 rounded-full bg-lime animate-pulse"></span>
+            <span class="text-xs font-bold text-white/70">All AI Agent Clusters Operational (99.98% SLA)</span>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black uppercase text-pink tracking-wider mb-4">Assistants</h4>
+          <ul class="space-y-2 text-xs font-semibold text-white/70">
+            <li><a href="#assistants-section" class="hover:text-white">Nova (Full Stack)</a></li>
+            <li><a href="#assistants-section" class="hover:text-white">Aria (Product VP)</a></li>
+            <li><a href="#assistants-section" class="hover:text-white">Marcus (B2B Sales)</a></li>
+            <li><a href="#assistants-section" class="hover:text-white">Elena (DevOps & SRE)</a></li>
+            <li><a href="#assistants-section" class="hover:text-white">Zara (STAR Behavioral)</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black uppercase text-lime tracking-wider mb-4">Platform</h4>
+          <ul class="space-y-2 text-xs font-semibold text-white/70">
+            <li><a href="#simulator-section" class="hover:text-white">Live Simulator</a></li>
+            <li><a href="#features-section" class="hover:text-white">EEOC Compliance</a></li>
+            <li><a href="#features-section" class="hover:text-white">Code Sandboxing</a></li>
+            <li><a href="#pricing-section" class="hover:text-white">ROI Calculator</a></li>
+            <li><a href="#" class="hover:text-white">API Documentation</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-black uppercase text-cyan tracking-wider mb-4">Company</h4>
+          <ul class="space-y-2 text-xs font-semibold text-white/70">
+            <li><a href="#" class="hover:text-white">About Us</a></li>
+            <li><a href="#" class="hover:text-white">Security & Privacy</a></li>
+            <li><a href="#" class="hover:text-white">Terms of Service</a></li>
+            <li><a href="#" class="hover:text-white">Contact Sales</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="mt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/50 font-bold gap-4">
+        <span>© 2025 IntervueAI Inc. All rights reserved. Global autonomous hiring platform.</span>
+        <div class="flex items-center gap-6">
+          <span class="hover:text-white cursor-pointer"><i class="fa-brands fa-x-twitter"></i></span>
+          <span class="hover:text-white cursor-pointer"><i class="fa-brands fa-linkedin"></i></span>
+          <span class="hover:text-white cursor-pointer"><i class="fa-brands fa-github"></i></span>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ============================================== -->
+  <!-- MODAL: APPOINT / HIRE ASSISTANT CHECKOUT FLOW -->
+  <!-- ============================================== -->
+  <div id="booking-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div class="modal-backdrop fixed inset-0" onclick="closeBookingModal()"></div>
+
+    <div class="relative bg-white border-3 border-ink rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl z-10 max-h-[92vh] overflow-y-auto">
+      
+      <!-- Close Button -->
+      <button onclick="closeBookingModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-ink flex items-center justify-center text-ink text-sm font-bold">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Step 1 Form Header -->
+      <div id="modal-step-form">
+        <div class="flex items-center gap-2.5 mb-2">
+          <span class="w-3 h-3 rounded-full bg-lime animate-ping"></span>
+          <span class="text-xs font-black uppercase text-purple tracking-wider">Fast Campaign Appointment</span>
+        </div>
+
+        <h3 class="text-2xl font-black text-ink">Appoint Your AI Interviewer</h3>
+        <p class="text-xs text-ink/70 font-semibold mt-1">
+          Lock in your dedicated interviewer agent for ~1,000 units of your currency. Instant campaign activation.
+        </p>
+
+        <!-- Form Elements -->
+        <div class="mt-6 space-y-4">
+          
+          <div>
+            <label class="block text-xs font-black text-ink uppercase mb-1">Target Assistant / Role</label>
+            <select id="modal-agent-select" class="w-full bg-slate-50 border-2 border-ink rounded-xl p-3 text-sm font-bold text-ink focus:outline-none focus:border-purple">
+              <option value="Nova Vance (Staff Full-Stack)">Nova Vance — Staff Full-Stack & Systems</option>
+              <option value="Aria Montgomery (VP Product)">Aria Montgomery — VP Product & Strategy</option>
+              <option value="Marcus Sterling (Enterprise AE)">Marcus Sterling — Enterprise B2B Sales</option>
+              <option value="Elena Rostova (DevOps & SRE)">Elena Rostova — DevOps & SRE</option>
+              <option value="Kai Tanaka (Customer Success & RevOps)">Kai Tanaka — Customer Success & RevOps</option>
+              <option value="Zara Quinn (Culture & Behavioral)">Zara Quinn — Culture, Behavioral & Ethics</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-black text-ink uppercase mb-1">Your Company Name</label>
+              <input type="text" id="modal-company" placeholder="e.g. Acme Corp" class="w-full bg-slate-50 border-2 border-ink rounded-xl p-3 text-sm font-bold text-ink focus:outline-none focus:border-purple">
+            </div>
+            <div>
+              <label class="block text-xs font-black text-ink uppercase mb-1">Work Email</label>
+              <input type="email" id="modal-email" placeholder="you@company.com" class="w-full bg-slate-50 border-2 border-ink rounded-xl p-3 text-sm font-bold text-ink focus:outline-none focus:border-purple">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-black text-ink uppercase mb-1">Job Description or Key Requirements</label>
+            <textarea id="modal-jd" rows="2" placeholder="Paste brief role summary, must-have skills, tech stack, or salary band..." class="w-full bg-slate-50 border-2 border-ink rounded-xl p-3 text-sm font-medium text-ink focus:outline-none focus:border-purple"></textarea>
+          </div>
+
+          <!-- Pricing summary block inside modal -->
+          <div class="p-4 rounded-2xl bg-gradient-to-r from-purple/10 to-pink/10 border-2 border-purple-200 flex items-center justify-between">
+            <div>
+              <span class="text-[11px] font-black uppercase text-purple block">Total Due Today</span>
+              <span class="text-2xl font-black text-ink" id="modal-price-display">$1,000 USD</span>
+              <span class="text-[10px] text-ink/60 font-bold block">Detected localized standard campaign price</span>
+            </div>
+            <div class="text-right">
+              <span class="bg-lime text-ink text-[11px] font-black px-2.5 py-1 rounded-full border border-ink shadow-neo-sm block">
+                Includes 50 Interviews
+              </span>
+              <span class="text-[10px] text-ink/70 font-bold mt-1 block">No recurring surprises</span>
+            </div>
+          </div>
+
+          <!-- Mock Payment details -->
+          <div class="p-3 bg-slate-50 border-2 border-ink/20 rounded-xl space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold text-ink/80">
+              <span><i class="fa-solid fa-credit-card text-purple mr-1"></i> Card Payment Simulator</span>
+              <span class="text-emerald-600 font-extrabold"><i class="fa-solid fa-lock text-[10px]"></i> 256-Bit SSL Encrypted</span>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" placeholder="4242 •••• •••• 4242" value="4242 •••• •••• 4242" class="flex-1 bg-white border border-ink/30 rounded-lg p-2 text-xs font-mono font-bold" readonly>
+              <input type="text" placeholder="12/28" value="12/28" class="w-16 bg-white border border-ink/30 rounded-lg p-2 text-xs font-mono font-bold" readonly>
+              <input type="text" placeholder="999" value="999" class="w-14 bg-white border border-ink/30 rounded-lg p-2 text-xs font-mono font-bold" readonly>
+            </div>
+          </div>
+
+          <button onclick="processAppointmentPayment()" id="modal-pay-btn" class="w-full bg-gradient-to-r from-purple via-pink to-orange hover:opacity-95 text-white font-black py-4 rounded-2xl border-2 border-ink shadow-neo text-base transition-all transform active:scale-95 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-lock"></i>
+            <span>Authorize & Appoint Assistant</span>
+          </button>
+
+          <p class="text-center text-[11px] text-ink/60 font-semibold">
+            100% Satisfaction Guarantee. If dissatisfied with candidate evaluations within 14 days, get a full refund.
+          </p>
+
+        </div>
+      </div>
+
+      <!-- Step 2: Payment Success Screen (Hidden by default) -->
+      <div id="modal-step-success" class="hidden text-center py-6 space-y-4">
+        <div class="w-20 h-20 bg-lime text-ink border-3 border-ink rounded-full flex items-center justify-center text-3xl mx-auto shadow-neo">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 class="text-2xl font-black text-ink">Assistant Appointed Successfully!</h3>
+        <p class="text-sm text-ink/70 font-semibold max-w-sm mx-auto">
+          Your campaign workspace has been initialized. We've sent candidate invitation links and calibration details to your email.
+        </p>
+        
+        <div class="p-4 bg-slate-50 border-2 border-ink rounded-2xl text-left text-xs space-y-2">
+          <div class="flex justify-between font-bold">
+            <span class="text-ink/60">Campaign ID:</span>
+            <span class="font-mono text-ink">IV-9482-AI</span>
+          </div>
+          <div class="flex justify-between font-bold">
+            <span class="text-ink/60">Assigned Agent:</span>
+            <span id="success-agent-name" class="font-black text-purple">Nova Vance</span>
+          </div>
+          <div class="flex justify-between font-bold">
+            <span class="text-ink/60">Amount Paid:</span>
+            <span id="success-amount" class="font-black text-emerald-700">$1,000 USD</span>
+          </div>
+        </div>
+
+        <button onclick="closeBookingModal()" class="w-full bg-ink text-white font-extrabold py-3.5 rounded-xl border-2 border-ink shadow-neo-sm hover:bg-purple transition-colors">
+          Open Campaign Dashboard
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // ==========================================
+    // 1. CURRENCY DETECTION & LOCALIZATION LOGIC
+    // Target: ~1,000 units of the user's currency
+    // ==========================================
+    const CURRENCIES = {
+      USD: { symbol: '$', code: 'USD', flag: '🇺🇸', standard: 1000, pro: 2400, ent: 5000, label: '$1,000' },
+      EUR: { symbol: '€', code: 'EUR', flag: '🇪🇺', standard: 950, pro: 2300, ent: 4800, label: '€950' },
+      GBP: { symbol: '£', code: 'GBP', flag: '🇬🇧', standard: 850, pro: 2000, ent: 4200, label: '£850' },
+      INR: { symbol: '₹', code: 'INR', flag: '🇮🇳', standard: 79000, pro: 189000, ent: 399000, label: '₹79,000' },
+      CAD: { symbol: 'C$', code: 'CAD', flag: '🇨🇦', standard: 1350, pro: 3200, ent: 6800, label: 'C$1,350' },
+      AUD: { symbol: 'A$', code: 'AUD', flag: '🇦🇺', standard: 1480, pro: 3500, ent: 7400, label: 'A$1,480' },
+      JPY: { symbol: '¥', code: 'JPY', flag: '🇯🇵', standard: 150000, pro: 360000, ent: 750000, label: '¥150,000' },
+      SGD: { symbol: 'S$', code: 'SGD', flag: '🇸🇬', standard: 1320, pro: 3100, ent: 6600, label: 'S$1,320' },
+      AED: { symbol: 'AED ', code: 'AED', flag: '🇦🇪', standard: 3670, pro: 8800, ent: 18400, label: 'AED 3,670' }
+    };
+
+    let activeCurrency = 'USD';
+
+    function detectUserLocationAndCurrency() {
+      try {
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        const userLocale = navigator.language || '';
+
+        if (timeZone.includes('Calcutta') || timeZone.includes('Kolkata') || userLocale.includes('IN')) {
+          activeCurrency = 'INR';
+        } else if (timeZone.includes('London') || userLocale.includes('GB')) {
+          activeCurrency = 'GBP';
+        } else if (timeZone.includes('Europe') || ['de', 'fr', 'es', 'it', 'nl'].some(lang => userLocale.startsWith(lang))) {
+          activeCurrency = 'EUR';
+        } else if (timeZone.includes('Toronto') || timeZone.includes('Vancouver') || userLocale.includes('CA')) {
+          activeCurrency = 'CAD';
+        } else if (timeZone.includes('Sydney') || timeZone.includes('Melbourne') || userLocale.includes('AU')) {
+          activeCurrency = 'AUD';
+        } else if (timeZone.includes('Tokyo') || userLocale.includes('ja') || userLocale.includes('JP')) {
+          activeCurrency = 'JPY';
+        } else if (timeZone.includes('Singapore') || userLocale.includes('SG')) {
+          activeCurrency = 'SGD';
+        } else if (timeZone.includes('Dubai') || userLocale.includes('AE')) {
+          activeCurrency = 'AED';
+        } else {
+          activeCurrency = 'USD';
+        }
+      } catch (e) {
+        activeCurrency = 'USD';
+      }
+
+      const select = document.getElementById('currency-select');
+      if (select) select.value = activeCurrency;
+      updateCurrencyDOM();
+    }
+
+    function updateCurrencyDOM() {
+      const cur = CURRENCIES[activeCurrency] || CURRENCIES.USD;
+      
+      // Update flag
+      const flagEl = document.getElementById('detected-country-flag');
+      if (flagEl) flagEl.textContent = cur.flag;
+
+      // Update hero copy & CTA
+      const heroTag = document.getElementById('hero-currency-tag');
+      if (heroTag) heroTag.textContent = `${cur.symbol}${cur.standard.toLocaleString()} ${cur.code}`;
+
+      const heroCta = document.getElementById('hero-cta-btn');
+      if (heroCta) heroCta.textContent = `Appoint for ${cur.symbol}${cur.standard.toLocaleString()}`;
+
+      // Update assistant cards
+      const agentPriceTags = document.querySelectorAll('.assistant-price-tag');
+      agentPriceTags.forEach(el => {
+        el.textContent = `${cur.symbol}${cur.standard.toLocaleString()} ${cur.code}`;
+      });
+
+      // Update pricing table
+      const pStd = document.getElementById('plan-standard-price');
+      if (pStd) pStd.textContent = `${cur.symbol}${cur.standard.toLocaleString()}`;
+
+      const pPro = document.getElementById('plan-pro-price');
+      if (pPro) pPro.textContent = `${cur.symbol}${cur.pro.toLocaleString()}`;
+
+      const pEnt = document.getElementById('plan-ent-price');
+      if (pEnt) pEnt.textContent = `${cur.symbol}${cur.ent.toLocaleString()}+`;
+
+      // Update modal display
+      const modalPrice = document.getElementById('modal-price-display');
+      if (modalPrice) modalPrice.textContent = `${cur.symbol}${cur.standard.toLocaleString()} ${cur.code}`;
+
+      calculateROI();
+    }
+
+    // Currency Switcher Event
+    document.getElementById('currency-select').addEventListener('change', function(e) {
+      activeCurrency = e.target.value;
+      updateCurrencyDOM();
+    });
+
+    // ==========================================
+    // 2. ROI CALCULATOR
+    // ==========================================
+    function calculateROI() {
+      const slider = document.getElementById('roi-slider');
+      if (!slider) return;
+      const count = parseInt(slider.value, 10);
+      
+      document.getElementById('roi-candidate-count').textContent = count;
+      
+      // Calculations: 1.5 recruiter hours per candidate
+      const hours = Math.round(count * 1.5);
+      document.getElementById('roi-hours-saved').textContent = `${hours} hrs`;
+
+      // Recruiter hourly cost approx $65 equivalent
+      const cur = CURRENCIES[activeCurrency] || CURRENCIES.USD;
+      const dollarSavings = Math.round((hours * 65) * (cur.standard / 1000));
+      document.getElementById('roi-money-saved').textContent = `${cur.symbol}${dollarSavings.toLocaleString()}`;
+    }
+
+    // ==========================================
+    // 3. AGENT FILTERING
+    // ==========================================
+    function filterAgents(category) {
+      const buttons = document.querySelectorAll('.agent-filter-btn');
+      buttons.forEach(btn => {
+        btn.classList.remove('bg-ink', 'text-white');
+        btn.classList.add('bg-white', 'text-ink');
+      });
+
+      // Highlight active button
+      event.target.classList.remove('bg-white', 'text-ink');
+      event.target.classList.add('bg-ink', 'text-white');
+
+      const cards = document.querySelectorAll('.agent-card');
+      cards.forEach(card => {
+        if (category === 'all' || card.classList.contains(category)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // ==========================================
+    // 4. INTERACTIVE SIMULATOR (LIVE DEMO)
+    // ==========================================
+    const SIM_SCENARIOS = {
+      system: {
+        agent: "Nova Vance",
+        role: "Staff Backend / Distributed Architecture",
+        question: "We are designing an e-commerce flash sale service with 80,000 requests/second hitting our database. How do you prevent inventory overselling without cratering read throughput?",
+        presets: [
+          { text: "💡 Atomic Redis decrement with Lua script & asynchronous queue processing.", score: 94, comment: "High architectural competence. Eliminates DB lock contention while strictly preventing overselling." },
+          { text: "⚠️ Scale up PostgreSQL with read replicas & sticky session balancing.", score: 48, comment: "Red Flag: Read replicas introduce replication lag, causing severe race conditions and inventory overselling." }
+        ]
+      },
+      product: {
+        agent: "Aria Montgomery",
+        role: "VP Product Strategy",
+        question: "Our B2B retention dropped 12% last quarter while top-of-funnel signups grew 40%. How would you diagnose the problem in your first 48 hours?",
+        presets: [
+          { text: "💡 Cohort analysis isolating onboarding activation checkpoints vs sign-up sources.", score: 96, comment: "Exceptional metric diagnostics. Distinguishes low-intent marketing spikes from product-core abandonment." },
+          { text: "⚠️ Immediately survey churning users and launch a discount pricing retention email.", score: 55, comment: "Surface-level reaction. Fails to segment user lifecycle or identify activation bottlenecks." }
+        ]
+      },
+      sales: {
+        agent: "Marcus Sterling",
+        role: "Enterprise B2B AE Roleplay",
+        question: "A CFO tells you: 'Your software looks nice, but we already have an ERP tool that does 70% of this, and we're freezing software spend.' What's your immediate counter?",
+        presets: [
+          { text: "💡 Validate the freeze, quantify cost of that 30% gap in manual labor, align on ROI pilot.", score: 92, comment: "Masterful objection handling. Shifts conversation from software expense to quantified labor leakage." },
+          { text: "⚠️ Offer an immediate 25% discount if they sign before quarter-end.", score: 40, comment: "Weak discipline. Destroys margin credibility without identifying economic pain points." }
+        ]
+      }
+    };
+
+    function switchSimScenario() {
+      const select = document.getElementById('sim-role-select');
+      const data = SIM_SCENARIOS[select.value];
+
+      document.getElementById('sim-agent-name').textContent = data.agent;
+      document.getElementById('sim-ai-question').textContent = `"${data.question}"`;
+
+      // Update preset buttons
+      const chipsContainer = document.getElementById('sim-preset-chips');
+      chipsContainer.innerHTML = '';
+      data.presets.forEach((p, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "bg-white/5 hover:bg-white/15 text-white/90 text-xs px-3 py-2 rounded-xl border border-white/10 transition-colors text-left";
+        btn.onclick = () => applyPresetResponse(idx);
+        btn.innerHTML = p.text;
+        chipsContainer.appendChild(btn);
+      });
+
+      // Hide evaluation box
+      document.getElementById('sim-evaluation-card').classList.add('hidden');
+    }
+
+    function applyPresetResponse(index) {
+      const scenarioKey = document.getElementById('sim-role-select').value;
+      const preset = SIM_SCENARIOS[scenarioKey].presets[index];
+      
+      document.getElementById('sim-user-input').value = preset.text.replace(/^[💡⚠️]\s*/, '').replace(/^"|"$/g, '');
+      submitUserSimResponse(preset.score, preset.comment);
+    }
+
+    function submitUserSimResponse(presetScore, presetComment) {
+      const input = document.getElementById('sim-user-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const dialogueBox = document.getElementById('dialogue-box');
+
+      // Append user bubble
+      const userBubble = document.createElement('div');
+      userBubble.className = "flex items-start justify-end gap-3";
+      userBubble.innerHTML = `
+        <div class="bg-pink text-white p-3.5 rounded-2xl rounded-tr-none max-w-xl text-xs sm:text-sm font-semibold">
+          "${text}"
+        </div>
+        <div class="w-8 h-8 rounded-lg bg-pink text-white flex-shrink-0 flex items-center justify-center text-xs font-black">
+          YOU
+        </div>
+      `;
+      dialogueBox.appendChild(userBubble);
+      dialogueBox.scrollTop = dialogueBox.scrollHeight;
+      input.value = '';
+
+      // Reveal Evaluation Box
+      const score = presetScore || Math.floor(Math.random() * 20 + 78);
+      const comment = presetComment || "AI Response Analyzed: Candidate demonstrates clear structural reasoning, precise terminology, and zero synthetic fluff.";
+
+      const evalCard = document.getElementById('sim-evaluation-card');
+      evalCard.classList.remove('hidden');
+      document.getElementById('sim-score-pill').textContent = `Score: ${score}/100`;
+      document.getElementById('sim-score-commentary').textContent = comment;
+
+      evalCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ==========================================
+    // 5. APPOINTMENT / BOOKING MODAL & PAYMENT
+    // ==========================================
+    function openBookingModal(agentName) {
+      if (agentName) {
+        const select = document.getElementById('modal-agent-select');
+        for (let i = 0; i < select.options.length; i++) {
+          if (select.options[i].text.includes(agentName) || select.options[i].value.includes(agentName)) {
+            select.selectedIndex = i;
+            break;
+          }
+        }
+      }
+
+      document.getElementById('modal-step-form').classList.remove('hidden');
+      document.getElementById('modal-step-success').classList.add('hidden');
+      document.getElementById('booking-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeBookingModal() {
+      document.getElementById('booking-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function processAppointmentPayment() {
+      const btn = document.getElementById('modal-pay-btn');
+      const originalText = btn.innerHTML;
+      
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing Secure Payment...`;
+      btn.disabled = true;
+
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+
+        // Switch to success view
+        const select = document.getElementById('modal-agent-select');
+        const chosenAgent = select.options[select.selectedIndex].text;
+        const cur = CURRENCIES[activeCurrency] || CURRENCIES.USD;
+
+        document.getElementById('success-agent-name').textContent = chosenAgent;
+        document.getElementById('success-amount').textContent = `${cur.symbol}${cur.standard.toLocaleString()} ${cur.code}`;
+
+        document.getElementById('modal-step-form').classList.add('hidden');
+        document.getElementById('modal-step-success').classList.remove('hidden');
+
+        // Trigger celebratory confetti
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+      }, 1400);
+    }
+
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Keyboard ESC to close modal
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeBookingModal();
+    });
+
+    // Initialize location, currency and simulator on load
+    window.addEventListener('DOMContentLoaded', () => {
+      detectUserLocationAndCurrency();
+      switchSimScenario();
+      calculateROI();
+    });
+  </script>
+</body>
+</html>
